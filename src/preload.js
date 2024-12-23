@@ -10,5 +10,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateBinary: () => ipcRenderer.invoke('update-binary'),
     onCheckUpdates: (callback) => ipcRenderer.on('check-updates', () => callback()),
     getTheme: () => ipcRenderer.invoke('get-theme'),
-    setTheme: (theme) => ipcRenderer.invoke('set-theme', theme)
+    setTheme: (theme) => ipcRenderer.invoke('set-theme', theme),
+    checkSubtitles: (url) => ipcRenderer.invoke('check-subtitles', url),
+    clearCache: () => ipcRenderer.invoke('clear-cache'),
+    onCacheClearProgress: (callback) => 
+        ipcRenderer.on('cache-clear-progress', (event, value) => callback(value)),
 }); 

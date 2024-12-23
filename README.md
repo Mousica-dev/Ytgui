@@ -11,32 +11,21 @@ I have a `.png` file that serves as the logo for the project, but I have no idea
 
 For the repository, add your feature and open a pull request, or simply open an issue and tag it with the "suggestion" label.
 
----
+# Install dependencies
+npm install
 
-# Installation (From Source)
+# Run the app
+npm start
 
-I have already created a `.dmg` and a `.exe` file in the releases, but if you want to build it yourself or use a different operating system, you can run the following commands:
-
-```
-npm install (to install dependencies)
-npm run build:(the file extension you want)
+# Build for your platform
+npm run build:mac     # For macOS
+npm run build:win     # For Windows
+npm run build:linux   # For Linux
 ```
 
 This will generate the file in the `dist` folder.
 
-**NOTE:** You need to have `node` and `npm` installed, and you will need to update the `package.json` file accordingly.
-
-## Clean Build
-
-Run this to clean temporary files:
-
-```
-./clean.sh
-```
-
-## Requirements
-- Node.js
-- npm
+Or simply open an issue with the "suggestion" label.
 
 ## License
 MIT License

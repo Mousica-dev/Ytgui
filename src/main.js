@@ -5,6 +5,7 @@ const Store = require('electron-store');
 const store = new Store();
 const fs = require('fs');
 const axios = require('axios');
+const { execSync } = require('child_process');
 
 let mainWindow;
 const ytdlpPath = path.join(__dirname, '..', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
@@ -93,7 +94,7 @@ ipcMain.handle('select-directory', async () => {
     return result.filePaths[0];
 });
 
-ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPath }) => {
+ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPath, customFileName, fileType, videoQuality, subtitleOptions }) => {
     const finalPath = useDefaultPath ? store.get('defaultPath') : downloadPath;
     
     if (!finalPath) throw new Error('No download path specified');
@@ -101,7 +102,36 @@ ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPa
     cleanupTempFiles(finalPath);
 
     return new Promise((resolve, reject) => {
-        const ytdlp = spawn(ytdlpPath, [url, '-P', finalPath]);
+        const args = [url, '-P', finalPath];
+
+        // Handle quality selection
+        if (videoQuality === 'audio') {
+            args.push('-f', 'bestaudio');
+        } else if (videoQuality === 'best') {
+            args.push('-f', 'bestvideo+bestaudio');
+        } else {
+            args.push('-f', `bestvideo[height<=${videoQuality}]+bestaudio/best[height<=${videoQuality}]`);
+        }
+
+        // Add subtitle options
+        if (subtitleOptions?.enabled) {
+            args.push('--write-subs');                   // Enable subtitle download
+            args.push('--sub-langs', subtitleOptions.language); // Language code (not --sub-lang)
+            args.push('--embed-subs');                   // Embed subtitles in the video
+            args.push('--convert-subs', 'srt');          // Convert to SRT format
+            args.push('--write-auto-subs');              // Also get auto-generated subs if available
+        }
+
+        // Add format conversion
+        if (fileType) {
+            args.push('--recode-video', fileType);
+        }
+        
+        if (customFileName) {
+            args.push('-o', `${customFileName}.${fileType}`);
+        }
+
+        const ytdlp = spawn(ytdlpPath, args);
 
         ytdlp.stdout.on('data', (data) => mainWindow.webContents.send('download-progress', data.toString()));
         ytdlp.stderr.on('data', (data) => mainWindow.webContents.send('download-error', data.toString()));
@@ -160,6 +190,113 @@ ipcMain.handle('set-theme', (event, theme) => {
             nativeTheme.themeSource = 'system';
     }
     return theme;
+});
+
+// Add new IPC handler for subtitle check
+ipcMain.handle('check-subtitles', async (event, url) => {
+    return new Promise((resolve, reject) => {
+        const args = [
+            url,
+            '--list-subs',    // List available subtitles
+            '--quiet',        // Don't show progress
+        ];
+
+        const ytdlp = spawn(ytdlpPath, args);
+        let output = '';
+
+        ytdlp.stdout.on('data', (data) => {
+            output += data.toString();
+        });
+
+        ytdlp.stderr.on('data', (data) => {
+            output += data.toString();
+        });
+
+        ytdlp.on('close', (code) => {
+            if (code === 0) {
+                // Check if subtitles are available
+                const hasSubtitles = output.includes('Available subtitles');
+                const hasAutoSubs = output.includes('Available automatic captions');
+                resolve({
+                    available: hasSubtitles || hasAutoSubs,
+                    hasManual: hasSubtitles,
+                    hasAuto: hasAutoSubs
+                });
+            } else {
+                reject('Failed to check subtitles');
+            }
+        });
+    });
+});
+
+// Add new IPC handler for cache cleaning
+ipcMain.handle('clear-cache', async () => {
+    return new Promise((resolve, reject) => {
+        const steps = [
+            {
+                cmd: 'rm',
+                args: ['-rf', 'dist/', 'build/', '.webpack/'],
+                message: '📦 Cleaning build directories...'
+            },
+            {
+                cmd: 'find',
+                args: ['.', '-type', 'f', '-name', '*.tmp', '-delete'],
+                message: '🗑️ Cleaning temporary files...'
+            },
+            {
+                cmd: 'find',
+                args: ['.', '-type', 'f', '-name', '*.f*-*.mp4', '-delete'],
+                message: '🎥 Cleaning video fragments...'
+            },
+            {
+                cmd: 'find',
+                args: ['.', '-type', 'f', '-name', '*.vtt.tmp', '-delete'],
+                message: '💬 Cleaning subtitle files...'
+            },
+            {
+                cmd: 'npm',
+                args: ['cache', 'clean', '--force'],
+                message: '📦 Cleaning npm cache...'
+            }
+        ];
+
+        let completed = 0;
+        
+        for (const step of steps) {
+            mainWindow.webContents.send('cache-clear-progress', {
+                message: step.message,
+                progress: (completed / steps.length) * 100
+            });
+
+            try {
+                execSync(`${step.cmd} ${step.args.join(' ')}`);
+                completed++;
+            } catch (error) {
+                console.error(`Error in step: ${step.message}`, error);
+            }
+        }
+
+        // Check and reinstall yt-dlp if needed
+        if (!fs.existsSync(ytdlpPath)) {
+            mainWindow.webContents.send('cache-clear-progress', {
+                message: '⚠️ Reinstalling yt-dlp...',
+                progress: 90
+            });
+            
+            try {
+                execSync('npm run postinstall');
+            } catch (error) {
+                console.error('Error reinstalling yt-dlp:', error);
+            }
+        }
+
+        mainWindow.webContents.send('cache-clear-progress', {
+            message: '✨ Cache cleared successfully!',
+            progress: 100
+        });
+
+        resolve('Cache cleared successfully');
+    });
 });
 
 app.on('before-quit', () => {
