@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, nativeTheme } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
@@ -141,6 +141,25 @@ ipcMain.handle('update-binary', async () => {
         console.error('Error updating binary:', error);
         return false;
     }
+});
+
+ipcMain.handle('get-theme', () => {
+    return store.get('theme', 'system');
+});
+
+ipcMain.handle('set-theme', (event, theme) => {
+    store.set('theme', theme);
+    switch (theme) {
+        case 'dark':
+            nativeTheme.themeSource = 'dark';
+            break;
+        case 'light':
+            nativeTheme.themeSource = 'light';
+            break;
+        default:
+            nativeTheme.themeSource = 'system';
+    }
+    return theme;
 });
 
 app.on('before-quit', () => {

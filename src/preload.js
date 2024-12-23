@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onError: (callback) => ipcRenderer.on('download-error', (event, value) => callback(value)),
     checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
     updateBinary: () => ipcRenderer.invoke('update-binary'),
-    onCheckUpdates: (callback) => ipcRenderer.on('check-updates', () => callback())
+    onCheckUpdates: (callback) => ipcRenderer.on('check-updates', () => callback()),
+    getTheme: () => ipcRenderer.invoke('get-theme'),
+    setTheme: (theme) => ipcRenderer.invoke('set-theme', theme)
 }); 

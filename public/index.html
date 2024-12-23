@@ -80,10 +80,13 @@
 
         .input-group {
             margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
 
         input[type="text"] {
-            width: 100%;
+            width: 75%;
             padding: 12px 15px;
             border: 2px solid var(--border-color);
             border-radius: 8px;
@@ -192,9 +195,8 @@
 
         label {
             font-weight: 500;
-            margin-bottom: 8px;
-            display: block;
             color: var(--text-color);
+            margin-bottom: 0;
         }
 
         /* Animations */
@@ -205,6 +207,18 @@
 
         .container {
             animation: fadeIn 0.3s ease-out;
+        }
+
+        .progress-container {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .percentage {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--title-color);
+            transition: all 0.3s ease;
         }
     </style>
 </head>
@@ -248,12 +262,136 @@
             </div>
         </div>
 
+        <div class="progress-container">
+            <div id="percentage" class="percentage">0%</div>
+        </div>
+
         <button id="downloadBtn">Download Video</button>
 
         <div id="progress"></div>
     </div>
 
     <script>
+    let currentDownloadPath = '';
+    
+    document.getElementById('setDefaultPath').addEventListener('click', async () => {
+        const path = await window.electronAPI.selectDirectory();
+        if (path) {
+            await window.electronAPI.saveDefaultPath(path);
+            document.getElementById('defaultPathDisplay').textContent = `Default path: ${path}`;
+        }
+    });
+
+    document.getElementById('selectPath').addEventListener('click', async () => {
+        const path = await window.electronAPI.selectDirectory();
+        if (path) {
+            currentDownloadPath = path;
+            document.getElementById('selectedPath').textContent = `Selected path: ${path}`;
+        }
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', async () => {
+        document.getElementById('percentage').textContent = '0%';
+        const url = document.getElementById('videoUrl').value;
+        const useDefaultPath = document.getElementById('useDefaultPath').checked;
+        
+        if (!url) {
+            alert('Please enter a video URL');
+            return;
+        }
+
+        if (!useDefaultPath && !currentDownloadPath) {
+            alert('Please select a download path');
+            return;
+        }
+
+        try {
+            document.getElementById('progress').textContent = 'Starting download...\n';
+            await window.electronAPI.downloadVideo({
+                url,
+                downloadPath: currentDownloadPath,
+                useDefaultPath
+            });
+        } catch (error) {
+            document.getElementById('progress').textContent += `Error: ${error}\n`;
+        }
+    });
+
+    window.electronAPI.onProgress((progress) => {
+        document.getElementById('progress').textContent += progress;
+        
+        // Extract percentage if available
+        const percentMatch = progress.match(/(\d+(?:\.\d+)?%)/);
+        if (percentMatch) {
+            document.getElementById('percentage').textContent = percentMatch[1];
+        }
+        
+        // Auto-scroll to bottom
+        const progressDiv = document.getElementById('progress');
+        progressDiv.scrollTop = progressDiv.scrollHeight;
+    });
+
+    window.electronAPI.onError((error) => {
+        document.getElementById('progress').textContent += `Error: ${error}\n`;
+    });
+
+    async function checkForUpdates() {
+        const result = await window.electronAPI.checkForUpdates();
+        if (result.needsUpdate) {
+            const shouldUpdate = confirm(
+                `A new version of yt-dlp is available!\n\n` +
+                `Current version: ${result.currentVersion}\n` +
+                `Latest version: ${result.latestVersion}\n\n` +
+                `Would you like to update now?`
+            );
+            
+            if (shouldUpdate) {
+                const progressDiv = document.getElementById('progress');
+                progressDiv.textContent = 'Updating yt-dlp binary, please wait...\n';
+                
+                const success = await window.electronAPI.updateBinary();
+                if (success) {
+                    progressDiv.textContent += 'Update completed successfully!\n';
+                } else {
+                    progressDiv.textContent += 'Update failed. Please try again later.\n';
+                }
+            }
+        }
+    }
+
+    window.electronAPI.onCheckUpdates(() => {
+        checkForUpdates();
+    });
+
+    async function initTheme() {
+        const theme = await window.electronAPI.getTheme();
+        document.getElementById('theme-select').value = theme;
+        updateTheme(theme);
+    }
+
+    function updateTheme(theme) {
+        if (theme === 'system') {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+    }
+
+    document.getElementById('theme-select').addEventListener('change', async (e) => {
+        const theme = e.target.value;
+        await window.electronAPI.setTheme(theme);
+        updateTheme(theme);
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        const theme = document.getElementById('theme-select').value;
+        if (theme === 'system') {
+            updateTheme('system');
+        }
+    });
+
+    initTheme();
     </script>
 </body>
 </html> 
