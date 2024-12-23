@@ -1,0 +1,56 @@
+{
+  "name": "ytgui",
+  "version": "1.0.0",
+  "description": "GUI for yt-dlp",
+  "main": "src/main.js",
+  "author": {
+    "name": "Your Name",
+    "email": "your.email@example.com"
+  },
+  "scripts": {
+    "start": "electron .",
+    "postinstall": "node src/download-ytdlp.js",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "electron-store": "^8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^28.1.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.ytgui.app",
+    "productName": "YTgui",
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "assets/icon_512x512.png",
+      "target": [
+        "dmg"
+      ],
+      "extraResources": [
+        {
+          "from": "bin/",
+          "to": "bin/",
+          "filter": [
+            "**/*"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": ["nsis"],
+      "icon": "assets/icon_512x512.png",
+      "extraResources": [
+        {
+          "from": "bin/",
+          "to": "bin/",
+          "filter": ["**/*"]
+        }
+      ]
+    }
+  }
+}

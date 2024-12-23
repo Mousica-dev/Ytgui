@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>YTgui</title>
+    <style>
+        :root {
+            --bg-color: #f5f5f5;
+            --container-bg: white;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --hover-color: #1976D2;
+            --button-bg: #2196F3;
+            --button-hover: #1976D2;
+            --button-active: #1565C0;
+            --secondary-text: #666;
+            --title-color: #1565C0;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --container-bg: #2d2d2d;
+            --text-color: #e0e0e0;
+            --border-color: #404040;
+            --hover-color: #64b5f6;
+            --button-bg: #2196F3;
+            --button-hover: #64b5f6;
+            --button-active: #90caf9;
+            --secondary-text: #b0b0b0;
+            --title-color: #90caf9;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        input[type="text"] {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+        }
+
+        input[type="text"]:focus {
+            border-color: #2196F3;
+            outline: none;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #2196F3;
+        }
+
+        button {
+            padding: 12px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1976D2;
+        }
+
+        button:active {
+            background-color: #1565C0;
+        }
+
+        #progress {
+            white-space: pre-wrap;
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .title {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--title-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo-text {
+            display: flex;
+            align-items: center;
+        }
+
+        .title img {
+            height: 40px;
+            width: auto;
+            object-fit: contain;
+            margin-right: 4px;
+        }
+
+        .path-display {
+            background-color: var(--bg-color);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .section {
+            padding: 15px;
+            background-color: var(--container-bg);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .theme-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .theme-switcher select {
+            padding: 5px;
+            border-radius: 4px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        input[type="text"]::placeholder {
+            color: var(--secondary-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="theme-switcher">
+        <label for="theme-select">Theme:</label>
+        <select id="theme-select">
+            <option value="system">System</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <div class="title">
+            <div class="logo-text">
+                <img src="YTgui-logo.png" alt="YTgui logo">
+                <span>YTgui</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label for="videoUrl">Media URL</label>
+            <input type="text" id="videoUrl" placeholder="Enter media URL">
+        </div>
+
+        <div class="section">
+            <div class="checkbox-group">
+                <input type="checkbox" id="useDefaultPath">
+                <label for="useDefaultPath">Use default download path</label>
+            </div>
+            <button id="setDefaultPath">Set Default Download Path</button>
+            <div id="defaultPathDisplay" class="path-display"></div>
+        </div>
+
+        <div class="section">
+            <label for="downloadPath">Custom Download Path</label>
+            <div style="margin-top: 10px;">
+                <button id="selectPath">Select Download Path</button>
+                <div id="selectedPath" class="path-display"></div>
+            </div>
+        </div>
+
+        <button id="downloadBtn">Download Video</button>
+
+        <div id="progress"></div>
+    </div>
+
+    <script>
+        let currentDownloadPath = '';
+        
+        document.getElementById('setDefaultPath').addEventListener('click', async () => {
+            const path = await window.electronAPI.selectDirectory();
+            if (path) {
+                await window.electronAPI.saveDefaultPath(path);
+                document.getElementById('defaultPathDisplay').textContent = `Default path: ${path}`;
+            }
+        });
+
+        document.getElementById('selectPath').addEventListener('click', async () => {
+            const path = await window.electronAPI.selectDirectory();
+            if (path) {
+                currentDownloadPath = path;
+                document.getElementById('selectedPath').textContent = `Selected path: ${path}`;
+            }
+        });
+
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            const url = document.getElementById('videoUrl').value;
+            const useDefaultPath = document.getElementById('useDefaultPath').checked;
+            
+            if (!url) {
+                alert('Please enter a video URL');
+                return;
+            }
+
+            if (!useDefaultPath && !currentDownloadPath) {
+                alert('Please select a download path');
+                return;
+            }
+
+            try {
+                document.getElementById('progress').textContent = 'Starting download...\n';
+                await window.electronAPI.downloadVideo({
+                    url,
+                    downloadPath: currentDownloadPath,
+                    useDefaultPath
+                });
+            } catch (error) {
+                document.getElementById('progress').textContent += `Error: ${error}\n`;
+            }
+        });
+
+        window.electronAPI.onProgress((progress) => {
+            document.getElementById('progress').textContent += progress;
+            // Auto-scroll to bottom
+            const progressDiv = document.getElementById('progress');
+            progressDiv.scrollTop = progressDiv.scrollHeight;
+        });
+
+        window.electronAPI.onError((error) => {
+            document.getElementById('progress').textContent += `Error: ${error}\n`;
+        });
+
+        async function checkForUpdates() {
+            const result = await window.electronAPI.checkForUpdates();
+            if (result.needsUpdate) {
+                const shouldUpdate = confirm(
+                    `A new version of yt-dlp is available!\n\n` +
+                    `Current version: ${result.currentVersion}\n` +
+                    `Latest version: ${result.latestVersion}\n\n` +
+                    `Would you like to update now?`
+                );
+                
+                if (shouldUpdate) {
+                    const progressDiv = document.getElementById('progress');
+                    progressDiv.textContent = 'Updating yt-dlp binary, please wait...\n';
+                    
+                    const success = await window.electronAPI.updateBinary();
+                    if (success) {
+                        progressDiv.textContent += 'Update completed successfully!\n';
+                    } else {
+                        progressDiv.textContent += 'Update failed. Please try again later.\n';
+                    }
+                }
+            }
+        }
+
+        window.electronAPI.onCheckUpdates(() => {
+            checkForUpdates();
+        });
+
+        async function initTheme() {
+            const theme = await window.electronAPI.getTheme();
+            document.getElementById('theme-select').value = theme;
+            updateTheme(theme);
+        }
+
+        function updateTheme(theme) {
+            if (theme === 'system') {
+                const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+        }
+
+        document.getElementById('theme-select').addEventListener('change', async (e) => {
+            const theme = e.target.value;
+            await window.electronAPI.setTheme(theme);
+            updateTheme(theme);
+        });
+
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            const theme = document.getElementById('theme-select').value;
+            if (theme === 'system') {
+                updateTheme('system');
+            }
+        });
+
+        initTheme();
+    </script>
+</body>
+</html> 
