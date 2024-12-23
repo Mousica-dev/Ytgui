@@ -11,8 +11,6 @@ I have a `.png` file that serves as the logo for the project, but I have no idea
 
 For the repository, add your feature and open a pull request, or simply open an issue and tag it with the "suggestion" label.
 
-Here’s the corrected version of your text:
-
 ---
 
 # Installation (From Source)
