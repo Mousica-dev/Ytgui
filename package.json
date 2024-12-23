@@ -39,10 +39,18 @@
             "**/*"
           ]
         }
-      ]
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "identity": null
     },
     "win": {
-      "target": ["nsis"],
+      "target": [{
+        "target": "nsis",
+        "arch": ["x64"]
+      }],
       "icon": "assets/icon_512x512.png",
       "extraResources": [
         {
@@ -50,7 +58,16 @@
           "to": "bin/",
           "filter": ["**/*"]
         }
-      ]
+      ],
+      "publisherName": "YTgui",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "YTgui"
     }
   }
 }
