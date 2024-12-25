@@ -17,6 +17,17 @@
             --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Hide scrollbar for IE, Edge and Firefox */
+        * {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+
         [data-theme="dark"] {
             --bg-color: #1a1a1a;
             --container-bg: #2d2d2d;
@@ -39,6 +50,7 @@
             color: var(--text-color);
             min-height: 100vh;
             transition: all 0.3s ease;
+            overflow-y: auto;
         }
 
         .container {
@@ -48,6 +60,7 @@
             padding: 30px;
             border-radius: 15px;
             box-shadow: var(--shadow);
+            overflow-y: auto;
         }
 
         .title {
@@ -169,6 +182,12 @@
             overflow-y: auto;
             white-space: pre-wrap;
             color: var(--text-color);
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        #progress::-webkit-scrollbar {
+            display: none;
         }
 
         .theme-switcher {
@@ -541,6 +560,7 @@
         if (path) {
             await window.electronAPI.saveDefaultPath(path);
             document.getElementById('defaultPathDisplay').textContent = `Default path: ${path}`;
+            document.getElementById('useDefaultPath').disabled = false;
         }
     });
 
@@ -684,10 +704,22 @@
         const defaultPath = await window.electronAPI.getDefaultPath();
         if (defaultPath) {
             document.getElementById('defaultPathDisplay').textContent = `Default path: ${defaultPath}`;
+            document.getElementById('useDefaultPath').disabled = false;
+            // Enable the checkbox by default if there's a saved path
+            document.getElementById('useDefaultPath').checked = true;
         }
     }
 
-    // Call it when the app starts (add this right before initTheme())
+    // Listen for saved directory updates from main process
+    window.electronAPI.onLoadSavedDir((savedDir) => {
+        if (savedDir) {
+            document.getElementById('defaultPathDisplay').textContent = `Default path: ${savedDir}`;
+            document.getElementById('useDefaultPath').disabled = false;
+            document.getElementById('useDefaultPath').checked = true;
+        }
+    });
+
+    // Call it when the app starts
     loadSavedDefaultPath();
 
     initTheme();

@@ -9,6 +9,31 @@ const { execSync } = require('child_process');
 
 let mainWindow;
 const ytdlpPath = path.join(__dirname, '..', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+const savedDirPath = path.join(__dirname, '..', 'saved_download_dir.json');
+
+// Function to load saved directory
+function loadSavedDirectory() {
+    try {
+        if (fs.existsSync(savedDirPath)) {
+            const data = JSON.parse(fs.readFileSync(savedDirPath, 'utf8'));
+            return data.defaultDownloadDir || '';
+        }
+    } catch (error) {
+        console.error('Error loading saved directory:', error);
+    }
+    return '';
+}
+
+// Function to save directory
+function saveDirectory(directory) {
+    try {
+        fs.writeFileSync(savedDirPath, JSON.stringify({ defaultDownloadDir: directory }, null, 4));
+        return true;
+    } catch (error) {
+        console.error('Error saving directory:', error);
+        return false;
+    }
+}
 
 async function getLatestVersion() {
     try {
@@ -48,16 +73,38 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js')
         },
-        icon: path.join(__dirname, '..', 'assets', 'icon_512x512.png')
+        icon: path.join(__dirname, '..', 'assets', 'icon_512x512.png'),
+        autoHideMenuBar: true,
+        menuBarVisible: false
     });
 
+    mainWindow.setMenu(null);
+
     mainWindow.loadFile(path.join(__dirname, '..', 'public', 'index.html'));
+    
+    // Load saved directory when window is created
+    const savedDir = loadSavedDirectory();
+    if (savedDir) {
+        store.set('defaultPath', savedDir);
+    }
+
     mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.webContents.send('check-updates');
+        // Send saved directory to renderer
+        mainWindow.webContents.send('load-saved-dir', savedDir);
     });
 }
 
 app.whenReady().then(createWindow);
+
+// Save directory before app quits
+app.on('before-quit', () => {
+    const defaultPath = store.get('defaultPath');
+    if (defaultPath) {
+        saveDirectory(defaultPath);
+    }
+    cleanupTempFiles(defaultPath);
+});
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
@@ -144,7 +191,11 @@ ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPa
 
 ipcMain.handle('save-default-path', (event, path) => {
     store.set('defaultPath', path);
-    return true;
+    return saveDirectory(path);
+});
+
+ipcMain.handle('get-default-path', () => {
+    return loadSavedDirectory();
 });
 
 ipcMain.handle('check-for-updates', async () => {

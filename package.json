@@ -1,11 +1,10 @@
 {
   "name": "ytgui",
-  "version": "1.0.2",
+  "version": "1.0.0",
   "description": "GUI for yt-dlp",
   "main": "src/main.js",
   "author": {
-    "name": "Your Name",
-    "email": "your.email@example.com"
+    "name": "Mousica.dev"
   },
   "scripts": {
     "start": "electron .",
@@ -29,7 +28,10 @@
       "category": "public.app-category.utilities",
       "icon": "assets/icon_512x512.png",
       "target": [
-        "dmg"
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
       ],
       "extraResources": [
         {

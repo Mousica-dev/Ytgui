@@ -1,20 +1,35 @@
-# YTgui
+# YTgui 🎬
 
-A modern graphical user interface for yt-dlp, built with Electron
+A modern graphical user interface for yt-dlp, built with Electron. YTgui provides an intuitive and user-friendly way to download media from various platforms.
 
+<div align="center">
+  <img src="assets/icon_128x128.png" alt="YTgui Logo" width="128" height="128">
+</div>
 
-# Help
+## 🚀 Quick Start
 
-I have a `.png` file that serves as the logo for the project, but I have no idea how to apply it to the actual app. If anyone knows and is willing to add it, thank you very much!
+### Option 1: Using Pre-built Binaries
+1. Download the latest release for your platform:
+   - `.dmg` for macOS
+   - `.exe` for Windows
+2. Install the application
+3. Launch YTgui and start downloading!
 
-# Contributing
+### Option 2: Building from Source
 
-For the repository, add your feature and open a pull request, or simply open an issue and tag it with the "suggestion" label.
+#### Prerequisites
+- Node.js and npm installed
+- Git (for cloning the repository)
+
+```bash
+# Clone the repository
+git clone https://github.com/Mousica-dev/YTgui.git
+cd YTgui
 
 # Install dependencies
 npm install
 
-# Run the app
+# Run the development version
 npm start
 
 # Build for your platform
@@ -23,9 +38,26 @@ npm run build:win     # For Windows
 npm run build:linux   # For Linux
 ```
 
-This will generate the file in the `dist` folder.
+## 🤝 Contributing
 
-Or simply open an issue with the "suggestion" label.
+We welcome contributions! Here's how you can help:
 
-## License
-MIT License
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+Or simply open an issue with the tag "enhancement" or "bug" so I can add a feature or fix an already existent feature.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) for the amazing downloader
+- [Electron](https://www.electronjs.org/) for the framework
+
+---
+Made with ❤️ by [Mousica-dev](https://github.com/Mousica-dev)
