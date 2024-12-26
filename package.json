@@ -10,7 +10,7 @@
     "start": "electron .",
     "postinstall": "node src/download-ytdlp.js",
     "build": "electron-builder",
-    "build:mac": "electron-builder --mac",
+    "build:mac": "electron-builder --mac --x64 --arm64",
     "build:win": "electron-builder --win"
   },
   "dependencies": {
@@ -24,15 +24,11 @@
   "build": {
     "appId": "com.ytgui.app",
     "productName": "YTgui",
+    "artifactName": "${productName}-${version}-${arch}.${ext}",
     "mac": {
       "category": "public.app-category.utilities",
       "icon": "assets/icon_512x512.png",
-      "target": [
-        {
-          "target": "dmg",
-          "arch": ["x64", "arm64"]
-        }
-      ],
+      "target": "dmg",
       "extraResources": [
         {
           "from": "bin/",

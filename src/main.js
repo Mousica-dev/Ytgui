@@ -144,12 +144,29 @@ ipcMain.handle('select-directory', async () => {
 ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPath, customFileName, fileType, videoQuality, subtitleOptions }) => {
     const finalPath = useDefaultPath ? store.get('defaultPath') : downloadPath;
     
-    if (!finalPath) throw new Error('No download path specified');
+    if (!finalPath) {
+        throw new Error('No download path specified');
+    }
+
+    // Ensure the binary exists
+    if (!fs.existsSync(ytdlpPath)) {
+        throw new Error('yt-dlp binary not found. Please restart the application.');
+    }
+
+    // Ensure the download directory exists
+    if (!fs.existsSync(finalPath)) {
+        throw new Error('Download directory does not exist');
+    }
 
     cleanupTempFiles(finalPath);
 
     return new Promise((resolve, reject) => {
-        const args = [url, '-P', finalPath];
+        const args = [
+            url,
+            '-P',
+            finalPath,
+            '--no-playlist'  // Disable playlist download by default
+        ];
 
         // Handle quality selection
         if (videoQuality === 'audio') {
@@ -160,31 +177,53 @@ ipcMain.handle('download-video', async (event, { url, downloadPath, useDefaultPa
             args.push('-f', `bestvideo[height<=${videoQuality}]+bestaudio/best[height<=${videoQuality}]`);
         }
 
-        // Add subtitle options
+        // Add subtitle options if enabled
         if (subtitleOptions?.enabled) {
-            args.push('--write-subs');                   // Enable subtitle download
-            args.push('--sub-langs', subtitleOptions.language); // Language code (not --sub-lang)
-            args.push('--embed-subs');                   // Embed subtitles in the video
-            args.push('--convert-subs', 'srt');          // Convert to SRT format
-            args.push('--write-auto-subs');              // Also get auto-generated subs if available
+            args.push('--write-subs');
+            args.push('--sub-langs', subtitleOptions.language);
+            args.push('--embed-subs');
+            args.push('--convert-subs', 'srt');
+            args.push('--write-auto-subs');
         }
 
-        // Add format conversion
+        // Add format conversion if specified
         if (fileType) {
             args.push('--recode-video', fileType);
         }
         
+        // Add custom filename if specified
         if (customFileName) {
             args.push('-o', `${customFileName}.${fileType}`);
         }
 
+        console.log('Spawning yt-dlp with args:', args);
         const ytdlp = spawn(ytdlpPath, args);
 
-        ytdlp.stdout.on('data', (data) => mainWindow.webContents.send('download-progress', data.toString()));
-        ytdlp.stderr.on('data', (data) => mainWindow.webContents.send('download-error', data.toString()));
+        ytdlp.stdout.on('data', (data) => {
+            const output = data.toString();
+            console.log('yt-dlp output:', output);
+            mainWindow.webContents.send('download-progress', output);
+        });
+
+        ytdlp.stderr.on('data', (data) => {
+            const error = data.toString();
+            console.error('yt-dlp error:', error);
+            mainWindow.webContents.send('download-error', error);
+        });
+
+        ytdlp.on('error', (error) => {
+            console.error('Spawn error:', error);
+            reject(`Failed to start download: ${error.message}`);
+        });
+
         ytdlp.on('close', (code) => {
             cleanupTempFiles(finalPath);
-            code === 0 ? resolve('Download completed successfully') : reject(`Process exited with code ${code}`);
+            
+            if (code === 0) {
+                resolve('Download completed successfully');
+            } else {
+                reject(`Process exited with code ${code}`);
+            }
         });
     });
 });
